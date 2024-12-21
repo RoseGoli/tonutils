@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import time
+import base64
 from typing import Any, Dict, Optional, List, Union, Tuple
 
 from pytoniq_core import (
@@ -75,6 +76,7 @@ class Wallet(Contract):
 
         self._data = self.create_data(public_key, wallet_id=wallet_id, **kwargs).serialize()
         self._code = Cell.one_from_boc(self.CODE_HEX)
+        self.boc_hex = None
 
     @classmethod
     def create_data(cls, *args, **kwargs) -> Any:
@@ -356,8 +358,14 @@ class Wallet(Contract):
         message_boc_hex, message_hash = message_to_boc_hex(message)
 
         await self.client.send_message(message_boc_hex)
+        self.boc_hex = message_boc_hex
         return message_hash
-
+    
+    def get_boc_hex(self):
+        binary_data = bytes.fromhex(self.boc_hex)
+        base64_data = base64.b64encode(binary_data).decode('utf-8')
+        return base64_data
+    
     async def build_encrypted_comment_body(self, text: str, destination: Union[Address, str]) -> Cell:
         """
         Build an encrypted comment body.
